@@ -1,26 +1,24 @@
-import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
-
-
 class TTLabelEncoder(BaseEstimator, TransformerMixin):
     """Transform data frame columns with different categorical values
-    in training and test data. Adds unseen categories to the set of 
-    training values. TT stands for Train-Test Label Encoder
-
+    in training and test data. TT stands for Test-Train.
+    
     Pass individual data frame columns to the class instance"""
-
+    
     def fit(self, df_tr):
         self.code_dict = dict(zip(df['IP'].unique(),
                                   np.arange(len(df['IP'].unique()))))
-        self.max_code = max(self.code_dict.values())
+        self.__max_code__()
         return self
-
+    
     def transform(self, df_test):
         new_cat = set(df_test.unique()).difference(set(self.code_dict.keys()))
         if new_cat:
             new_codes = dict(zip(new_cat, 
                      np.arange(len(new_cat)) + self.max_code + 1))
             self.code_dict.update(new_codes)
+            self.__max_code__()
         return df_test.map(self.code_dict)
+    
+    def __max_code__(self):
+        self.max_code = max(self.code_dict.values())
+        return self
