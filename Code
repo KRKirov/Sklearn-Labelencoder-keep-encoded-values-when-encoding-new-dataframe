@@ -1,24 +1,37 @@
 class TTLabelEncoder(BaseEstimator, TransformerMixin):
     """Transform data frame columns with different categorical values
-    in training and test data. TT stands for Test-Train.
+    in training and test data. TT stands for Train-Test.
     
-    Pass individual data frame columns to the class instance"""
+    Pass individual data frame columns to the class instance."""
     
-    def fit(self, df_tr):
-        self.code_dict = dict(zip(df['IP'].unique(),
-                                  np.arange(len(df['IP'].unique()))))
+    def __init__(self):
+        self.code_dic = None
+        self.max_code = None
+        self.fitted = False
+    
+    def fit(self, df):
+        self.code_dict = dict(zip(df.unique(),
+                                  np.arange(len(df.unique()))))
         self.__max_code__()
+        self.fitted = True
         return self
     
-    def transform(self, df_test):
-        new_cat = set(df_test.unique()).difference(set(self.code_dict.keys()))
+    def transform(self, df):
+        assert self.fitted == True, 'Fit the data before transforming.'
+        new_cat = set(df.unique()).difference(set(self.code_dict.keys()))
         if new_cat:
             new_codes = dict(zip(new_cat, 
                      np.arange(len(new_cat)) + self.max_code + 1))
             self.code_dict.update(new_codes)
             self.__max_code__()
-        return df_test.map(self.code_dict)
+        return df.map(self.code_dict)
     
     def __max_code__(self):
         self.max_code = max(self.code_dict.values())
         return self
+    
+    def fit_transform(self, df):
+        if self.fitted == False:
+            self.fit(df)
+        df = self.transform(df)
+        return df
