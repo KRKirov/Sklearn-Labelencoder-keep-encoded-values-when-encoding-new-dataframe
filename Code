@@ -5,7 +5,8 @@ class TTLabelEncoder(BaseEstimator, TransformerMixin):
     Pass individual data frame columns to the class instance."""
     
     def __init__(self):
-        self.code_dic = None
+        self.code_dict = None
+        self.inv_code_dict = None
         self.max_code = None
         self.fitted = False
     
@@ -17,7 +18,7 @@ class TTLabelEncoder(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, df):
-        assert self.fitted == True, 'Fit the data before transforming.'
+        self.check_fit_status()
         new_cat = set(df.unique()).difference(set(self.code_dict.keys()))
         if new_cat:
             new_codes = dict(zip(new_cat, 
@@ -25,13 +26,23 @@ class TTLabelEncoder(BaseEstimator, TransformerMixin):
             self.code_dict.update(new_codes)
             self.__max_code__()
         return df.map(self.code_dict)
-    
-    def __max_code__(self):
-        self.max_code = max(self.code_dict.values())
-        return self
-    
+
     def fit_transform(self, df):
         if self.fitted == False:
             self.fit(df)
         df = self.transform(df)
         return df
+    
+    def inverse_transform(self, df):
+        self.check_fit_status()
+        self.inv_code_dict = {v:k for k, v in self.code_dict.items()}
+        df = df.map(self.inv_code_dict)
+        return df
+    
+    def check_fit_status(self):
+        assert self.fitted == True, 'Fit the data before transforming.'
+        return self
+    
+    def __max_code__(self):
+        self.max_code = max(self.code_dict.values())
+        return self
